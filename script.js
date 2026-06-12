@@ -1,25 +1,25 @@
 /* ─── PANEL SWITCHING ─── */
-const wrapper=document.getElementById('authWrapper');
-document.getElementById('goSignup').addEventListener('click',()=>wrapper.classList.add('show-signup'));
-document.getElementById('goLogin').addEventListener('click',()=>wrapper.classList.remove('show-signup'));
-document.getElementById('linkSignup').addEventListener('click',(e)=>{ e.preventDefault(); wrapper.classList.add('show-signup'); });
-document.getElementById('linkLogin').addEventListener('click',(e)=>{ e.preventDefault(); wrapper.classList.remove('show-signup'); });
+const card=document.getElementById('card');
+function switchTo(mode) {
+  if (mode === 'signup') card.classList.add('signup');
+  else card.classList.remove('signup');
+}
 
 /* ─── PASSWORD TOGGLE ─── */
-function togglePw(id,btn){
+function togglePassword(id,btn){
   const inp=document.getElementById(id);
   const show=inp.type==='password';
   inp.type=show?'text':'password';
   btn.innerHTML=show
-    ?`<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17.94 17.94A10.07 10.07 0 0112 20c-7 0-11-8-11-8a18.45 18.45 0 015.06-5.94M9.9 4.24A9.12 9.12 0 0112 4c7 0 11 8 11 8a18.5 18.5 0 01-2.16 3.19m-6.72-1.07a3 3 0 11-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg>`
-    :`<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>`;
+    ?`<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0112 20c-7 0-11-8-11-8a18.45 18.45 0 015.06-5.94M9.9 4.24A9.12 9.12 0 0112 4c7 0 11 8 11 8a18.5 18.5 0 01-2.16 3.19m-6.72-1.07a3 3 0 11-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg>`
+    :`<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>`;
 }
 
 /* ─── PASSWORD STRENGTH (Unique Feature #1) ─── */
 function checkStrength(pw){
-  const fill=document.getElementById('strengthFill');
-  const label=document.getElementById('strengthLabel');
-  const wrap=document.getElementById('strengthWrap');
+  const fill=document.getElementById('pw-fill');
+  const label=document.getElementById('pw-text');
+  const wrap=document.getElementById('pw-strength');
   wrap.style.display='block';
   if(!pw){fill.style.width='0%';label.textContent='Type a password to check strength';return}
 
@@ -53,80 +53,83 @@ function setErr(fieldId,errId,show){
 }
 
 /* Real-time clear on input */
-['lg-email','lg-pw','sg-name','sg-email','sg-pw'].forEach(id=>{
+['login-email','login-password','signup-username','signup-email','signup-password'].forEach(id=>{
   const el=document.getElementById(id);
   if(!el)return;
   el.addEventListener('input',()=>{
     const field=el.closest('.field');
     if(field.classList.contains('err'))field.classList.remove('err');
+    if(id==='signup-password') checkStrength(el.value);
   });
   el.addEventListener('blur',()=>{
-    if(id==='lg-email'&&el.value&&!isEmail(el.value))el.closest('.field').classList.add('err');
-    if(id==='sg-email'&&el.value&&!isEmail(el.value))el.closest('.field').classList.add('err');
-    if((id==='lg-pw'||id==='sg-pw')&&el.value&&el.value.length<8)el.closest('.field').classList.add('err');
-    if(id==='sg-name'&&el.value)el.closest('.field').classList.add('ok');
+    if(id==='login-email'&&el.value&&!isEmail(el.value))el.closest('.field').classList.add('err');
+    if(id==='signup-email'&&el.value&&!isEmail(el.value))el.closest('.field').classList.add('err');
+    if((id==='login-password'||id==='signup-password')&&el.value&&el.value.length<8)el.closest('.field').classList.add('err');
+    if(id==='signup-username'&&el.value)el.closest('.field').classList.add('ok');
     if(el.value&&!el.closest('.field').classList.contains('err'))el.closest('.field').classList.add('ok');
   });
 });
 
 /* ─── LOGIN SUBMIT ─── */
-document.getElementById('loginForm').addEventListener('submit',function(e){
-  e.preventDefault();
-  const email=document.getElementById('lg-email').value.trim();
-  const pw=document.getElementById('lg-pw').value;
+function handleLogin() {
+  const email=document.getElementById('login-email').value.trim();
+  const pw=document.getElementById('login-password').value;
+  const errorDiv=document.getElementById('login-error');
   let ok=true;
 
-  document.getElementById('lg-email-field').classList.remove('err','ok');
-  document.getElementById('lg-pw-field').classList.remove('err','ok');
+  if(!email||!isEmail(email)){ok=false;errorDiv.textContent='Valid email required.';}
+  else if(!pw||pw.length<8){ok=false;errorDiv.textContent='Password must be at least 8 chars.';}
 
-  if(!email||!isEmail(email)){document.getElementById('lg-email-field').classList.add('err');ok=false}
-  else document.getElementById('lg-email-field').classList.add('ok');
+  if(!ok){
+    errorDiv.style.display='block';
+    shakeForm('login-panel');
+    return;
+  }
 
-  if(!pw||pw.length<8){document.getElementById('lg-pw-field').classList.add('err');ok=false}
-  else document.getElementById('lg-pw-field').classList.add('ok');
-
-  if(!ok){shakeForm('loginForm');return}
-
-  const btn=document.getElementById('loginBtn');
-  btn.disabled=true;btn.classList.add('loading');
-  btn.querySelector('.btn-text').textContent='Signing in…';
+  errorDiv.style.display='none';
+  const btn=document.querySelector('#login-panel .btn-primary');
+  const originalText = btn.textContent;
+  btn.disabled=true;
+  btn.textContent='Signing in…';
 
   setTimeout(()=>{
-    btn.disabled=false;btn.classList.remove('loading');
-    btn.querySelector('.btn-text').textContent='Sign In →';
-    document.getElementById('loginSuccess').classList.add('show');
+    btn.disabled=false;
+    btn.textContent=originalText;
+    document.getElementById('welcome-page').classList.add('show');
+    document.getElementById('w-name').textContent=email.split('@')[0];
   },1800);
-});
+}
 
 /* ─── SIGNUP SUBMIT ─── */
-document.getElementById('signupForm').addEventListener('submit',function(e){
-  e.preventDefault();
-  const name=document.getElementById('sg-name').value.trim();
-  const email=document.getElementById('sg-email').value.trim();
-  const pw=document.getElementById('sg-pw').value;
+function handleSignup() {
+  const name=document.getElementById('signup-username').value.trim();
+  const email=document.getElementById('signup-email').value.trim();
+  const pw=document.getElementById('signup-password').value;
+  const errorDiv=document.getElementById('signup-error');
   let ok=true;
 
-  ['sg-name-field','sg-email-field','sg-pw-field'].forEach(id=>document.getElementById(id).classList.remove('err','ok'));
+  if(!name){ok=false;errorDiv.textContent='Username required.';}
+  else if(!email||!isEmail(email)){ok=false;errorDiv.textContent='Valid email required.';}
+  else if(!pw||pw.length<8){ok=false;errorDiv.textContent='Password must be at least 8 chars.';}
 
-  if(!name){document.getElementById('sg-name-field').classList.add('err');ok=false}
-  else document.getElementById('sg-name-field').classList.add('ok');
-  if(!email||!isEmail(email)){document.getElementById('sg-email-field').classList.add('err');ok=false}
-  else document.getElementById('sg-email-field').classList.add('ok');
-  if(!pw||pw.length<8){document.getElementById('sg-pw-field').classList.add('err');ok=false}
-  else document.getElementById('sg-pw-field').classList.add('ok');
+  if(!ok){
+    errorDiv.style.display='block';
+    shakeForm('signup-panel');
+    return;
+  }
 
-  if(!ok){shakeForm('signupForm');return}
-
-  const btn=document.getElementById('signupBtn');
-  btn.disabled=true;btn.classList.add('loading');
-  btn.querySelector('.btn-text').textContent='Creating account…';
+  errorDiv.style.display='none';
+  const btn=document.querySelector('#signup-panel .btn-primary');
+  const originalText = btn.textContent;
+  btn.disabled=true;
+  btn.textContent='Creating account…';
 
   setTimeout(()=>{
-    btn.disabled=false;btn.classList.remove('loading');
-    btn.querySelector('.btn-text').textContent='Create Account →';
-    document.getElementById('signupSuccess').classList.add('show');
+    btn.disabled=false;
+    btn.textContent=originalText;
+    switchTo('login'); // smoothly slide back to login screen
   },2000);
-});
+}
 
 /* ─── SHAKE ANIMATION ─── */
 const shakeKF=document.createElement('style');
@@ -139,26 +142,20 @@ function shakeForm(id){
   setTimeout(()=>f.style.animation='',500);
 }
 
-/* ─── SUCCESS RESET ─── */
-function resetSuccess(type){
-  if(type==='login'){
-    document.getElementById('loginSuccess').classList.remove('show');
-    document.getElementById('loginForm').reset();
-    ['lg-email-field','lg-pw-field'].forEach(id=>document.getElementById(id).classList.remove('err','ok'));
-  } else {
-    document.getElementById('signupSuccess').classList.remove('show');
-    document.getElementById('signupForm').reset();
-    ['sg-name-field','sg-email-field','sg-pw-field'].forEach(id=>document.getElementById(id).classList.remove('err','ok'));
-    document.getElementById('strengthFill').style.width='0%';
-    document.getElementById('strengthLabel').textContent='Type a password to check strength';
-    document.getElementById('strengthWrap').style.display='none';
-  }
+/* ─── SOCIAL AUTH & LOGOUT ─── */
+function socialAuth(provider) {
+  alert(`Authenticating with ${provider}...`);
+}
+function handleLogout() {
+  document.getElementById('welcome-page').classList.remove('show');
+  document.getElementById('login-email').value = '';
+  document.getElementById('login-password').value = '';
 }
 
 /* ─── UNIQUE FEATURE #2: Keyboard shortcut hint ─── */
 document.addEventListener('keydown',e=>{
-  if(e.ctrlKey&&e.key==='ArrowRight'){e.preventDefault();wrapper.classList.add('show-signup')}
-  if(e.ctrlKey&&e.key==='ArrowLeft'){e.preventDefault();wrapper.classList.remove('show-signup')}
+  if(e.ctrlKey&&e.key==='ArrowRight'){e.preventDefault();card.classList.add('signup')}
+  if(e.ctrlKey&&e.key==='ArrowLeft'){e.preventDefault();card.classList.remove('signup')}
 });
 
 /* ─── UNIQUE FEATURE #3: Live email domain suggestion ─── */
@@ -179,5 +176,5 @@ function addSuggestion(inputId){
     } else{tip.style.opacity='0'}
   });
 }
-addSuggestion('lg-email');
-addSuggestion('sg-email');
+addSuggestion('login-email');
+addSuggestion('signup-email');
