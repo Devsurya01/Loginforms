@@ -86,6 +86,16 @@ function handleLogin() {
     return;
   }
 
+  const users = JSON.parse(localStorage.getItem('users') || '[]');
+  const user = users.find(u => u.email === email && u.pw === pw);
+
+  if(!user){
+    errorDiv.textContent='Incorrect email or password.';
+    errorDiv.style.display='block';
+    shakeForm('login-panel');
+    return;
+  }
+
   errorDiv.style.display='none';
   const btn=document.querySelector('#login-panel .btn-primary');
   const originalText = btn.textContent;
@@ -96,7 +106,7 @@ function handleLogin() {
     btn.disabled=false;
     btn.textContent=originalText;
     document.getElementById('welcome-page').classList.add('show');
-    document.getElementById('w-name').textContent=email.split('@')[0];
+    document.getElementById('w-name').textContent=user.name;
   },1800);
 }
 
@@ -118,6 +128,14 @@ function handleSignup() {
     return;
   }
 
+  const users = JSON.parse(localStorage.getItem('users') || '[]');
+  if(users.some(u => u.email === email)){
+    errorDiv.textContent='Email already exists.';
+    errorDiv.style.display='block';
+    shakeForm('signup-panel');
+    return;
+  }
+
   errorDiv.style.display='none';
   const btn=document.querySelector('#signup-panel .btn-primary');
   const originalText = btn.textContent;
@@ -125,6 +143,9 @@ function handleSignup() {
   btn.textContent='Creating account…';
 
   setTimeout(()=>{
+    users.push({ name, email, pw });
+    localStorage.setItem('users', JSON.stringify(users));
+
     btn.disabled=false;
     btn.textContent=originalText;
     switchTo('login'); // smoothly slide back to login screen
